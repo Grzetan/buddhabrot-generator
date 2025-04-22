@@ -4,10 +4,10 @@ import glfw
 import numpy as np
 from PIL import Image
 
-width = 200
-height = 200
-xmin, xmax = -2.0, 2.0
-ymin, ymax = -2.5, 2.5
+width = 800
+height = 800
+xmin, xmax = -2.0, 1.0
+ymin, ymax = -1.5, 1.5
 
 
 def create_compute_shader_program(compute_src):
@@ -62,7 +62,7 @@ def create_programs():
     return compute_program, render_program
 
 
-def create_ssbo(num_samples=1_000_000):
+def create_ssbo(num_samples=10_000_000):
     ssbo = np.zeros((num_samples, 2), dtype=np.float32)
     for i in range(num_samples):
         ssbo[i][0] = np.random.uniform(xmin, xmax)
@@ -83,10 +83,23 @@ def fill_uniforms(agent_compute_program, render_program, input_data):
     ybounds_location = glGetUniformLocation(agent_compute_program, "ybounds")
     glUseProgram(agent_compute_program)
     glUniform2f(ybounds_location, input_data["ybounds"][0], input_data["ybounds"][1])
+
+    max_iterrations_location = glGetUniformLocation(
+        agent_compute_program, "maxIterations"
+    )
+    glUseProgram(agent_compute_program)
+    glUniform1ui(max_iterrations_location, input_data["maxIterations"])
+
+    texture_max_size_location = glGetUniformLocation(render_program, "textureMaxSize")
+    glUseProgram(render_program)
+    glUniform1ui(texture_max_size_location, input_data["textureMaxSize"])
+
     return {
         "ssboSize": ssbo_size_location,
         "xbounds": xbounds_location,
         "ybounds": ybounds_location,
+        "textureMaxSize": texture_max_size_location,
+        "maxIterations": max_iterrations_location,
     }
 
 
@@ -121,6 +134,8 @@ def main():
             "ssboSize": ssbo_data.shape[0],
             "xbounds": [xmin, xmax],
             "ybounds": [ymin, ymax],
+            "textureMaxSize": 0,
+            "maxIterations": 10000,
         },
     )
 
@@ -131,8 +146,15 @@ def main():
         glDispatchCompute(num_groups_x, 1, 1)
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
+        # Read texture data back to CPU (slow, for debugging only)
+        glBindTexture(GL_TEXTURE_2D, texture)
+        texture_data = np.zeros((height, width), dtype=np.uint32)
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, texture_data)
+        print("Max Value in texture:", np.max(texture_data))
+
         # Render the texture to the screen
         glUseProgram(render_program)
+        glUniform1ui(uniforms["textureMaxSize"], np.max(texture_data))
         glBindTexture(GL_TEXTURE_2D, texture)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
@@ -142,6 +164,7 @@ def main():
 
         glfw.swap_buffers(window)
         glfw.poll_events()
+        input()
 
     # Cleanup
     glDeleteProgram(compute_program)

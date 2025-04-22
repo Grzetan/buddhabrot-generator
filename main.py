@@ -4,8 +4,8 @@ import glfw
 import numpy as np
 from PIL import Image
 
-width = 800
-height = 800
+width = 200
+height = 200
 xmin, xmax = -2.0, 2.0
 ymin, ymax = -2.5, 2.5
 
@@ -35,7 +35,15 @@ def create_textures():
     texture = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture)
     glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, None
+        GL_TEXTURE_2D,
+        0,
+        GL_R32UI,
+        width,
+        height,
+        0,
+        GL_RED_INTEGER,
+        GL_UNSIGNED_INT,
+        None,
     )
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -54,7 +62,7 @@ def create_programs():
     return compute_program, render_program
 
 
-def create_ssbo(num_samples=1_000_0):
+def create_ssbo(num_samples=1_000_000):
     ssbo = np.zeros((num_samples, 2), dtype=np.float32)
     for i in range(num_samples):
         ssbo[i][0] = np.random.uniform(xmin, xmax)
@@ -119,7 +127,7 @@ def main():
     while not glfw.window_should_close(window):
         # Use compute shader to draw and update agents
         glUseProgram(compute_program)
-        glBindImageTexture(1, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F)
+        glBindImageTexture(1, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32UI)
         glDispatchCompute(num_groups_x, 1, 1)
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
@@ -127,6 +135,10 @@ def main():
         glUseProgram(render_program)
         glBindTexture(GL_TEXTURE_2D, texture)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+
+        # Clear the texture for the next pass
+        clear_value = np.array([0], dtype=np.uint32)
+        glClearTexImage(texture, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, clear_value)
 
         glfw.swap_buffers(window)
         glfw.poll_events()

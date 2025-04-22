@@ -5,7 +5,7 @@ layout (std430, binding = 0) buffer SSBO {
     vec2 samples[];
 } ssbo;
 
-layout (rgba32f, binding = 1) uniform image2D outputTexture;
+layout (r32ui, binding = 1) uniform uimage2D outputTexture;
 
 uniform uint ssboSize;
 uniform vec2 xbounds;
@@ -28,6 +28,6 @@ void main() {
 
     if (pixelCoord.x >= 0 && pixelCoord.x < texSize.x &&
         pixelCoord.y >= 0 && pixelCoord.y < texSize.y){
-        imageStore(outputTexture, pixelCoord, vec4(1.0, 0.0, 0.0, 1.0));
+        imageAtomicAdd(outputTexture, pixelCoord, 1u);
     }
 }

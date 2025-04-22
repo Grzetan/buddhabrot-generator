@@ -2,8 +2,13 @@
 in vec2 fragTexCoord;
 out vec4 outColor;
 
-uniform sampler2D inputTexture;
+uniform usampler2D inputTexture;
 
 void main() {
-    outColor = texture(inputTexture, fragTexCoord);   
+    uvec4 texel = texture(inputTexture, fragTexCoord);
+    uint count = texel.r;
+
+    float intensity;
+    intensity = float(count) / 25;
+    outColor = vec4(intensity, intensity, intensity, 1.0); 
 }

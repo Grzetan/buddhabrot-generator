@@ -1,5 +1,5 @@
 #version 430 core
-layout (local_size_x = 1, local_size_y = 1) in;
+layout (local_size_x = 32, local_size_y = 32) in;
 
 layout (r32ui, binding = 1) uniform uimage2D outputTexture;
 
@@ -37,9 +37,11 @@ void main() {
     float xLength = xbounds[1] - xbounds[0];
     float yLength = ybounds[1] - ybounds[0];
 
-    for(int i=0; i<1; i++){
-        float seedX = random(gl_GlobalInvocationID.x + i);
-        float seedY = random(gl_GlobalInvocationID.y + i);
+    uint iterationCount = 16000;
+
+    for(uint i=0; i<iterationCount; i++){
+        float seedX = random(i * 16001 * 16001 + gl_GlobalInvocationID.x * 16000 + gl_GlobalInvocationID.y);
+        float seedY = random(i * 16001 * 16001 + gl_GlobalInvocationID.y * 16000 + gl_GlobalInvocationID.x);
         vec2 samplePoint = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
 
         ivec2 texSize = imageSize(outputTexture);
@@ -49,7 +51,7 @@ void main() {
         uint escapeCount = 0;
 
         for(uint i=0; i<maxIterations; i++){
-            z = mul(z, z) + samplePoint;
+            z = mul(mul(z, z), z) + samplePoint;
             if (length(z) > 2.0) {
                 escaped = true;
                 escapeCount = i + 1;
@@ -60,7 +62,7 @@ void main() {
         if (escaped) {
             z = vec2(0.0, 0.0);
             for (uint j=0; j<escapeCount; j++){
-                z = mul(z, z) + samplePoint;
+                z = mul(mul(z, z), z) + samplePoint;
                 markPoint(z, texSize);
             }
         }

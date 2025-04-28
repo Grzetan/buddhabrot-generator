@@ -2,7 +2,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import glfw
 import numpy as np
-from matplotlib import pyplot as plt
+from PIL import Image
 
 width = 800
 height = 800
@@ -97,7 +97,7 @@ def main():
     # Use compute shader to draw and update agents
     glUseProgram(compute_program)
     glBindImageTexture(1, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32UI)
-    glDispatchCompute(10, 1, 1)
+    glDispatchCompute(500, 500, 1)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
     # Read texture data back to CPU (slow, for debugging only)
@@ -107,13 +107,11 @@ def main():
     print("Max Value in texture:", np.max(texture_data))
     print(texture_data.shape)
 
-    plt.figure(figsize=(10, 10))
-    plt.imshow(np.log1p(texture_data), cmap="hot", origin="lower")
-    plt.colorbar(label="Log(1 + Intensity)")
-    plt.title("Buddhabrot Visualization")
-    plt.xlabel("X pixel")
-    plt.ylabel("Y pixel")
-    plt.show()
+    texture_data = (texture_data / np.max(texture_data)) * 255
+    # Convert to PIL image and save
+    img = Image.fromarray(texture_data.astype(np.uint8), "L")  # 'L' mode for grayscale
+    img.show()  # Display the image
+    img.save("buddhabrot.png")  # Also save it to a file
 
     # Cleanup
     glDeleteProgram(compute_program)

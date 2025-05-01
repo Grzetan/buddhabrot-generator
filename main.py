@@ -107,11 +107,22 @@ def main():
     print("Max Value in texture:", np.max(texture_data))
     print(texture_data.shape)
 
-    texture_data = (texture_data / np.max(texture_data)) * 255
-    # Convert to PIL image and save
-    img = Image.fromarray(texture_data.astype(np.uint8), "L")  # 'L' mode for grayscale
-    img.show()  # Display the image
-    img.save("buddhabrot.png")  # Also save it to a file
+    normalized_data = ((texture_data / np.max(texture_data)) * 255).astype(np.uint8)
+    rgb_data = np.stack([normalized_data] * 3, axis=2)
+    img = Image.fromarray(rgb_data, "RGB")
+    img.show()
+    img.save("buddhabrot.png")
+
+    # # Transparent image
+    # alpha = (texture_data / np.max(texture_data)) * 255
+    # rgba_data = np.zeros((height, width, 4), dtype=np.uint8)
+    # rgba_data[..., 0] = 0
+    # rgba_data[..., 1] = 0
+    # rgba_data[..., 2] = 0
+    # rgba_data[..., 3] = alpha.astype(np.uint8)
+    # img = Image.fromarray(rgba_data, "RGBA")
+    # img.show()
+    # img.save("buddhabrot_transparent.png")
 
     # Cleanup
     glDeleteProgram(compute_program)

@@ -5,6 +5,7 @@ layout (r32ui, binding = 1) uniform uimage2D outputTexture;
 
 uniform vec2 xbounds;
 uniform vec2 ybounds;
+uniform vec2 c;
 uniform uint maxIterations;
 
 void markPoint(vec2 point, vec2 texSize){
@@ -46,7 +47,7 @@ void main() {
         ivec2 texSize = imageSize(outputTexture);
 
         vec2 origZ = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
-        vec2 c = vec2(-1.1600000000000001, 0.19999999999999937);
+        // vec2 c = vec2(-1.1600000000000001, 0.19999999999999937);
 
         bool escaped = false;
         uint escapeCount = 0;

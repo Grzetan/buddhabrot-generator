@@ -91,6 +91,7 @@ def main():
             "xbounds": [xmin, xmax],
             "ybounds": [ymin, ymax],
             "maxIterations": 1000,
+            "c": [0.5, 0],
         },
     )
 

@@ -6,13 +6,34 @@ from PIL import Image
 
 width = 800
 height = 800
-xmin, xmax = -2.0, 1.0
-ymin, ymax = -1.5, 1.5
+xmin, xmax = -4.0, 4.0
+ymin, ymax = -4.0, 4.0
 
 # Global variables for c value
 c_x = 0.0
 c_y = 0.0
 step_size = 0.01
+
+# Global variables for view control
+zoom_level = 1.0
+center_x = 0.0
+center_y = 0.0
+mouse_dragging = False
+last_drag_x = 0
+last_drag_y = 0
+
+
+def calculate_bounds():
+    # Calculate view bounds based on center point and zoom level
+    range_x = (xmax - xmin) / zoom_level
+    range_y = (ymax - ymin) / zoom_level
+
+    new_xmin = center_x - range_x / 2
+    new_xmax = center_x + range_x / 2
+    new_ymin = center_y - range_y / 2
+    new_ymax = center_y + range_y / 2
+
+    return new_xmin, new_xmax, new_ymin, new_ymax
 
 
 def create_compute_shader_program(compute_src):
@@ -71,24 +92,132 @@ def fill_uniforms(compute_program, input_data):
     }
 
 
-def key_callback(window, key, _scancode, action, _mods):
-    global c_x, c_y
+def key_callback(window, key, _scancode, action, mods):
+    global c_x, c_y, zoom_level, center_x, center_y
 
     if action == glfw.PRESS or action == glfw.REPEAT:
-        if key == glfw.KEY_RIGHT:
+        # C value navigation (normal arrow keys)
+        if key == glfw.KEY_RIGHT and mods == 0:
             c_x += step_size
             print(f"Current C: ({c_x:.4f}, {c_y:.4f})")
-        elif key == glfw.KEY_LEFT:
+        elif key == glfw.KEY_LEFT and mods == 0:
             c_x -= step_size
             print(f"Current C: ({c_x:.4f}, {c_y:.4f})")
-        elif key == glfw.KEY_UP:
+        elif key == glfw.KEY_UP and mods == 0:
             c_y += step_size
             print(f"Current C: ({c_x:.4f}, {c_y:.4f})")
-        elif key == glfw.KEY_DOWN:
+        elif key == glfw.KEY_DOWN and mods == 0:
             c_y -= step_size
             print(f"Current C: ({c_x:.4f}, {c_y:.4f})")
+
+        # Pan view with SHIFT + arrow keys
+        elif key == glfw.KEY_RIGHT and mods == glfw.MOD_SHIFT:
+            pan_amount = 0.1 / zoom_level
+            center_x += pan_amount
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+        elif key == glfw.KEY_LEFT and mods == glfw.MOD_SHIFT:
+            pan_amount = 0.1 / zoom_level
+            center_x -= pan_amount
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+        elif key == glfw.KEY_UP and mods == glfw.MOD_SHIFT:
+            pan_amount = 0.1 / zoom_level
+            center_y += pan_amount
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+        elif key == glfw.KEY_DOWN and mods == glfw.MOD_SHIFT:
+            pan_amount = 0.1 / zoom_level
+            center_y -= pan_amount
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+
+        # Zoom controls
+        elif key == glfw.KEY_EQUAL:  # '=' key for zoom in
+            zoom_level *= 1.2
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+        elif key == glfw.KEY_MINUS:  # '-' key for zoom out
+            zoom_level /= 1.2
+            print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
+
+        # Reset view
+        elif key == glfw.KEY_R:
+            center_x = 0.0
+            center_y = 0.0
+            zoom_level = 1.0
+            print(
+                f"View reset: Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x"
+            )
+
         elif key == glfw.KEY_ESCAPE:
             glfw.set_window_should_close(window, True)
+
+
+def mouse_button_callback(window, button, action, _mods):
+    global mouse_dragging, last_drag_x, last_drag_y
+
+    if button == glfw.MOUSE_BUTTON_LEFT:
+        if action == glfw.PRESS:
+            mouse_dragging = True
+            last_drag_x, last_drag_y = glfw.get_cursor_pos(window)
+        elif action == glfw.RELEASE:
+            mouse_dragging = False
+
+
+def cursor_position_callback(window, xpos, ypos):
+    global center_x, center_y, last_drag_x, last_drag_y, mouse_dragging
+
+    if mouse_dragging:
+        dx = xpos - last_drag_x
+        dy = ypos - last_drag_y
+
+        # Convert screen movement to complex plane movement
+        current_xmin, current_xmax, current_ymin, current_ymax = calculate_bounds()
+        scale_x = (current_xmax - current_xmin) / width
+        scale_y = (current_ymax - current_ymin) / height
+
+        # Move in opposite direction of drag and flip y-axis
+        center_x -= dx * scale_x
+        center_y += dy * scale_y  # Flip y-axis
+
+        last_drag_x = xpos
+        last_drag_y = ypos
+
+
+def scroll_callback(window, _xoffset, yoffset):
+    global zoom_level, center_x, center_y
+
+    # Get mouse position
+    mouse_x, mouse_y = glfw.get_cursor_pos(window)
+
+    # Current bounds
+    current_xmin, current_xmax, current_ymin, current_ymax = calculate_bounds()
+
+    # Map mouse position to complex plane coordinates
+    mouse_complex_x = current_xmin + (current_xmax - current_xmin) * ((mouse_x / width))
+    mouse_complex_y = current_ymin + (current_ymax - current_ymin) * (
+        (height - mouse_y) / height
+    )
+
+    # Store position before zoom
+    zoom_factor = 1.2
+    old_zoom = zoom_level
+
+    # Apply zoom
+    if yoffset > 0:
+        zoom_level *= zoom_factor
+    else:
+        zoom_level /= zoom_factor
+
+    # Ensure reasonable zoom bounds
+    zoom_level = max(0.1, zoom_level)
+
+    # Adjust center to zoom towards mouse position
+    if zoom_level != old_zoom:
+        center_x = mouse_complex_x - (mouse_complex_x - center_x) * (
+            old_zoom / zoom_level
+        )
+        center_y = mouse_complex_y - (mouse_complex_y - center_y) * (
+            old_zoom / zoom_level
+        )
+
+        print(f"Pan: ({center_x:.4f}, {center_y:.4f}), Zoom: {zoom_level:.2f}x")
 
 
 def render(compute_program, texture):
@@ -145,23 +274,33 @@ def main():
 
     glfw.make_context_current(window)
     glfw.set_key_callback(window, key_callback)
+    glfw.set_mouse_button_callback(window, mouse_button_callback)
+    glfw.set_cursor_pos_callback(window, cursor_position_callback)
+    glfw.set_scroll_callback(window, scroll_callback)
 
     texture = create_textures()
     compute_program = create_programs()
 
     # Initial C value
     print(f"Current C: ({c_x:.4f}, {c_y:.4f})")
+    print(f"Controls: Arrow keys - change C | Shift+Arrow keys - pan")
+    print(
+        f"          Mouse drag - pan | Scroll wheel - zoom | +/- - zoom | R - reset view"
+    )
 
     # Main render loop
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
-        # Update uniforms with current c value
+        # Calculate current bounds based on zoom and center
+        current_xmin, current_xmax, current_ymin, current_ymax = calculate_bounds()
+
+        # Update uniforms with current c value and bounds
         fill_uniforms(
             compute_program,
             {
-                "xbounds": [xmin, xmax],
-                "ybounds": [ymin, ymax],
+                "xbounds": [current_xmin, current_xmax],
+                "ybounds": [current_ymin, current_ymax],
                 "maxIterations": 1000,
                 "c": [c_x, c_y],
             },

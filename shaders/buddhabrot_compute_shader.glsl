@@ -46,8 +46,8 @@ void main() {
         float seedY = random(i * numberBase * numberBase + gl_GlobalInvocationID.y * numberBase + gl_GlobalInvocationID.x);
         ivec2 texSize = imageSize(outputTexture);
 
-        vec2 origZ = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
-        // vec2 c = vec2(-1.1600000000000001, 0.19999999999999937);
+        vec2 c = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
+        vec2 origZ = vec2(0,0);
 
         bool escaped = false;
         uint escapeCount = 0;

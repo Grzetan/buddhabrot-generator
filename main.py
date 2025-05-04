@@ -90,14 +90,14 @@ def main():
         {
             "xbounds": [xmin, xmax],
             "ybounds": [ymin, ymax],
-            "maxIterations": 10000,
+            "maxIterations": 1000,
         },
     )
 
     # Use compute shader to draw and update agents
     glUseProgram(compute_program)
     glBindImageTexture(1, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32UI)
-    glDispatchCompute(500, 500, 1)
+    glDispatchCompute(50, 50, 1)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
     # Read texture data back to CPU (slow, for debugging only)

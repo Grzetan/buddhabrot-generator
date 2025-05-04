@@ -37,21 +37,23 @@ void main() {
     float xLength = xbounds[1] - xbounds[0];
     float yLength = ybounds[1] - ybounds[0];
 
-    uint iterationCount = 16000;
+    uint iterationCount = 10;
+    uint numberBase = max(iterationCount, gl_NumWorkGroups.x * gl_WorkGroupSize.x) + 1;
 
     for(uint i=0; i<iterationCount; i++){
-        float seedX = random(i * 16001 * 16001 + gl_GlobalInvocationID.x * 16000 + gl_GlobalInvocationID.y);
-        float seedY = random(i * 16001 * 16001 + gl_GlobalInvocationID.y * 16000 + gl_GlobalInvocationID.x);
-        vec2 samplePoint = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
-
+        float seedX = random(i * numberBase * numberBase + gl_GlobalInvocationID.x * numberBase + gl_GlobalInvocationID.y);
+        float seedY = random(i * numberBase * numberBase + gl_GlobalInvocationID.y * numberBase + gl_GlobalInvocationID.x);
         ivec2 texSize = imageSize(outputTexture);
 
-        vec2 z = vec2(0.0, 0.0);
+        vec2 origZ = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
+        vec2 c = vec2(-1.1600000000000001, 0.19999999999999937);
+
         bool escaped = false;
         uint escapeCount = 0;
 
+        vec2 z = origZ;
         for(uint i=0; i<maxIterations; i++){
-            z = mul(mul(z, z), z) + samplePoint;
+            z = mul(z, z) + c;
             if (length(z) > 2.0) {
                 escaped = true;
                 escapeCount = i + 1;
@@ -60,9 +62,9 @@ void main() {
         }
 
         if (escaped) {
-            z = vec2(0.0, 0.0);
+            z = origZ;
             for (uint j=0; j<escapeCount; j++){
-                z = mul(mul(z, z), z) + samplePoint;
+                z = mul(z, z) + c;
                 markPoint(z, texSize);
             }
         }

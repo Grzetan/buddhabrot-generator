@@ -5,7 +5,7 @@ layout (r32ui, binding = 1) uniform uimage2D outputTexture;
 
 uniform vec2 xbounds;
 uniform vec2 ybounds;
-uniform vec2 c;
+uniform vec2 origC; // Leave this uniform unused to ensure compatibility with buddha julia sets
 uniform uint maxIterations;
 
 void markPoint(vec2 point, vec2 texSize){
@@ -38,7 +38,7 @@ void main() {
     float xLength = xbounds[1] - xbounds[0];
     float yLength = ybounds[1] - ybounds[0];
 
-    uint iterationCount = 10;
+    uint iterationCount = 16000;
     uint numberBase = max(iterationCount, gl_NumWorkGroups.x * gl_WorkGroupSize.x) + 1;
 
     for(uint i=0; i<iterationCount; i++){
@@ -47,7 +47,7 @@ void main() {
         ivec2 texSize = imageSize(outputTexture);
 
         vec2 c = vec2(seedX * xLength + xbounds[0] , seedY * yLength + ybounds[0]);
-        vec2 origZ = vec2(0,0);
+        vec2 origZ = vec2(0.0, 0.0);
 
         bool escaped = false;
         uint escapeCount = 0;

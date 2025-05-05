@@ -14,23 +14,25 @@ def generate_buddhabrot(
 
     # Iterate through random c samples
     for _ in range(samples):
-        c = complex(0.5, 0)
-        z = complex(np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max))
+        z = complex(0.0, 0)
+        c = complex(np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max))
         orbit = []
-
+        escaped = False
         # Track orbit until escape or max iterations
         for _ in range(max_iter):
             z = z * z + c
             orbit.append(z)
             if abs(z) > escape_radius:
-                # Record each point in the orbit
-                for z in orbit:
-                    # Normalize to pixel coordinates
-                    x_pix = int((z.real - x_min) / (x_max - x_min) * (width - 1))
-                    y_pix = int((z.imag - y_min) / (y_max - y_min) * (height - 1))
-                    if 0 <= x_pix < width and 0 <= y_pix < height:
-                        histogram[y_pix, x_pix] += 1
+                escaped = True
                 break
+
+        if not escaped:
+            # Increment histogram for each point in the orbit
+            for z in orbit:
+                x = int((z.real - x_min) / (x_max - x_min) * width)
+                y = int((z.imag - y_min) / (y_max - y_min) * height)
+                if 0 <= x < width and 0 <= y < height:
+                    histogram[y, x] += 1
 
     print(np.max(histogram))
 

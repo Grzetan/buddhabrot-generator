@@ -8,6 +8,7 @@ width = 800
 height = 800
 xmin, xmax = -4.0, 4.0
 ymin, ymax = -4.0, 4.0
+PROGRAM = "shaders/buddha_juliaset.glsl"
 
 # Global variables for c value
 c_x = 0.0
@@ -63,7 +64,7 @@ def create_textures():
 
 
 def create_programs():
-    with open("shaders/buddhabrot_compute_shader.glsl") as f:
+    with open(PROGRAM) as f:
         compute_program = create_compute_shader_program(f.read())
 
     return compute_program
@@ -81,14 +82,14 @@ def fill_uniforms(compute_program, input_data):
     max_iterations_location = glGetUniformLocation(compute_program, "maxIterations")
     glUniform1ui(max_iterations_location, input_data["maxIterations"])
 
-    c_location = glGetUniformLocation(compute_program, "c")
-    glUniform2f(c_location, input_data["c"][0], input_data["c"][1])
+    c_location = glGetUniformLocation(compute_program, "origC")
+    glUniform2f(c_location, input_data["origC"][0], input_data["origC"][1])
 
     return {
         "xbounds": xbounds_location,
         "ybounds": ybounds_location,
         "maxIterations": max_iterations_location,
-        "c": c_location,
+        "origC": c_location,
     }
 
 
@@ -302,7 +303,7 @@ def main():
                 "xbounds": [current_xmin, current_xmax],
                 "ybounds": [current_ymin, current_ymax],
                 "maxIterations": 1000,
-                "c": [c_x, c_y],
+                "origC": [c_x, c_y],
             },
         )
 

@@ -8,6 +8,7 @@ width = 800
 height = 800
 xmin, xmax = -2.0, 1.0
 ymin, ymax = -1.5, 1.5
+PROGRAM = "shaders/antibuddhabrot.glsl"
 
 
 def create_compute_shader_program(compute_src):
@@ -37,7 +38,7 @@ def create_textures():
 
 
 def create_programs():
-    with open("shaders/buddhabrot_compute_shader.glsl") as f:
+    with open(PROGRAM) as f:
         compute_program = create_compute_shader_program(f.read())
 
     return compute_program
@@ -91,7 +92,7 @@ def main():
             "xbounds": [xmin, xmax],
             "ybounds": [ymin, ymax],
             "maxIterations": 1000,
-            "c": [0.5, 0],
+            "origC": [0.5, 0],
         },
     )
 

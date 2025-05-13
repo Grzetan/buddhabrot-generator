@@ -15,7 +15,26 @@
 
 ### Gallery <a name="gallery"></a>
 
+##### Anti-buddha-burningship fractal
+![image](gallery/anti_burningship.png)
 
+##### Anti-buddha-tricorn fractal
+![image](gallery/anti_tricorn.png)
+
+##### Anti-buddhabrot fractal
+![image](gallery/antibuddhabrot.png)
+
+##### Buddha-burningship-power-3 fractal
+![image](gallery/buddha_burningship3.png)
+
+##### Buddha-tricorn fractal
+![image](gallery/buddha_tricorn.png)
+
+#### Buddha-tricorn-power-3 fractal
+![image](gallery/buddha_tricorn3.png)
+
+##### Buddhabrot fractal
+![image](gallery/buddhabrot.png)
 
 
 ### Requirements <a name="requirements"></a>
@@ -45,6 +64,14 @@ The program uses OpenGL to render variety of buddhabrot fractals. There are two 
 
 - ##### `cpu.py`
     Script mainly used for debugging.
+
+There a different options for `buddhabrot.glsl` fractal like `tricorn fractal` or `burning ship fractal` varians. To change it pick corrent formula in `.glsl` file.
+
+```
+// Mandelbrot: z = power(z, vec2(2, 0.0)) + c;
+// Tricorn: z = power(conjugate(z), vec2(2, 0.0)) + c;
+// BurningShip: z = power(cabs(z), vec2(2, 0.0)) + c;
+```
 
 ### How it works <a name="how-it-works"></a>
 

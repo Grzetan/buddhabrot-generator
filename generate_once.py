@@ -3,11 +3,13 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import glfw
 import numpy as np
 from PIL import Image
+from skimage import exposure
 
-width = 800
-height = 800
-xmin, xmax = -2.0, 1.0
-ymin, ymax = -1.5, 1.5
+
+width = 1080
+height = 1080
+xmin, xmax = -2.5, 2
+ymin, ymax = -2, 2
 PROGRAM = "shaders/antibuddhabrot.glsl"
 
 
@@ -91,21 +93,27 @@ def main():
         {
             "xbounds": [xmin, xmax],
             "ybounds": [ymin, ymax],
-            "maxIterations": 1000,
-            "origC": [0.5, 0],
+            "maxIterations": 10000,
+            "origC": [0, 0],
         },
     )
 
     # Use compute shader to draw and update agents
     glUseProgram(compute_program)
     glBindImageTexture(1, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32UI)
-    glDispatchCompute(50, 50, 1)
+    glDispatchCompute(500, 500, 1)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
-    # Read texture data back to CPU (slow, for debugging only)
     glBindTexture(GL_TEXTURE_2D, texture)
     texture_data = np.zeros((height, width), dtype=np.uint32)
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, texture_data)
+
+    # Different ways to enchance the image
+    texture_data = np.power(texture_data, 0.5)
+    # texture_data = np.log1p(texture_data)
+    # texture_data = np.expm1(1 * texture_data)
+    # texture_data = exposure.equalize_adapthist(texture_data, clip_limit=0.02)
+
     print("Max Value in texture:", np.max(texture_data))
     print(texture_data.shape)
 

@@ -24,6 +24,21 @@ vec2 mul(vec2 a, vec2 b){
   return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x);
 }
 
+vec2 power(vec2 z, vec2 w) {
+  float r = length(z);
+  float theta = atan(z.y, z.x);
+
+  float r_ = pow(r, w.x);
+  float theta_ = theta * w.x;
+
+  if (w.y != 0.0) {
+    r_ *= exp(-w.y*theta);
+    theta_ += w.y*log(r);
+  }
+
+  return vec2(r_*cos(theta_), r_*sin(theta_));
+}
+
 float random(uint state){
     state ^= 2747636419u;
     state *= 2654435769u;
@@ -32,6 +47,21 @@ float random(uint state){
     state ^= state >> 16;
     state *= 2654435769u;
     return state / 4294967295.0;
+}
+
+vec2 conjugate(vec2 z) {
+    return vec2(z.x, -z.y);
+}
+
+float abs(float a) {
+    if(a >= 0.0){
+        return a;
+    }
+    return -a;
+}
+
+vec2 cabs(vec2 z){
+  return vec2(abs(z.x), abs(z.y));
 }
 
 void main() {
@@ -54,7 +84,9 @@ void main() {
 
         vec2 z = origZ;
         for(uint i=0; i<maxIterations; i++){
-            z = mul(z, z) + c;
+            z = power(z, vec2(2, 0.0)) + c;
+            // Tricorn: z = power(conjugate(z), vec2(2, 0.0)) + c;
+            // BurningShip: z = power(cabs(z), vec2(2, 0.0)) + c;
             if (length(z) > 2.0) {
                 escaped = true;
                 escapeCount = i + 1;
@@ -65,7 +97,9 @@ void main() {
         if (!escaped) {
             z = origZ;
             for (uint j=0; j<maxIterations; j++){
-                z = mul(z, z) + c;
+                z = power(z, vec2(2, 0.0)) + c;
+                // Tricorn: z = power(conjugate(z), vec2(2, 0.0)) + c;
+                // BurningShip: z = power(cabs(z), vec2(2, 0.0)) + c;
                 markPoint(z, texSize);
             }
         }
